@@ -28,6 +28,110 @@ test('verify that id property is named id', async () => {
 	expect(response.body[0].id).toBeDefined()
 })
 
+test('a valid blog can be added', async () => {
+	const newBlog = {
+		title: 'JavaScript Belfalle9i',
+		author: 'Hsan Directeur',
+		url: 'http://www.hsouna.lem3allem.com.tn/hsounajavascript',
+		likes: 19
+	}
+
+	await api
+		.post('/api/blogs')
+		.send(newBlog)
+		.expect(201)
+		.expect('Content-Type', /application\/json/)
+
+	const blogsAtEnd = await helper.blogsInDb()
+	expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
+
+	const titles = blogsAtEnd.map(r => r.title)
+	expect(titles).toContain(
+		'JavaScript Belfalle9i'
+	)
+})
+
+test('checks if the likes property is missing 0 is affected to likes', async () => {
+	const newBlog = {
+		title: 'NodeJs is Special',
+		author: 'Reb3i Mouleha',
+		url: 'http://www.reb3i.moulaelmoul.com.tn/reb3iNodeJS'
+	}
+
+	const response = await api
+		.post('/api/blogs')
+		.send(newBlog)
+		.expect(201)
+		.expect('Content-Type', /application\/json/)
+	expect(response.body.likes).toBeDefined()
+
+	const blogsAtEnd = await helper.blogsInDb()
+	expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1)
+
+	const titles = blogsAtEnd.map(r => r.title)
+	expect(titles).toContain(
+		'NodeJs is Special'
+	)
+})
+
+test('checks if the url is missing request 400 is sent', async () => {
+	const newBlog = {
+		title: 'NodeJs is Special',
+		author: 'Reb3i Mouleha'
+	}
+
+	await api
+		.post('/api/blogs')
+		.send(newBlog)
+		.expect(400)
+})
+
+test('checks if the title is missing request 400 is sent', async () => {
+	const newBlog = {
+		author: 'Reb3i Mouleha',
+		url: 'http://www.reb3i.moulaelmoul.com.tn/reb3iNodeJS'
+	}
+
+	await api
+		.post('/api/blogs')
+		.send(newBlog)
+		.expect(400)
+})
+
+test('deleting an existing resource. succeeds with status code 204 if id is valid', async () => {
+	const blogsAtStart = await helper.blogsInDb()
+	const blogToDelete = blogsAtStart[0]
+
+	await api
+		.delete(`/api/blogs/${blogToDelete.id}`)
+		.expect(204)
+
+	const blogsAtEnd = await helper.blogsInDb()
+
+	expect(blogsAtEnd).toHaveLength(
+		helper.initialBlogs.length - 1
+	)
+
+	const titles = blogsAtEnd.map(r => r.title)
+
+	expect(titles).not.toContain(blogsAtEnd.title)
+})
+
+test('updating likes on a blog', async () => {
+	const blogsAtStart = await helper.blogsInDb()
+	const blogToUpdate = blogsAtStart[0]
+	const newBlog = { ...blogToUpdate, likes: 25 }
+	console.log(newBlog)
+	await api
+		.put(`/api/blogs/${blogToUpdate.id}`)
+		.send(newBlog)
+		.expect(200)
+
+	const blogsAtEnd = await helper.blogsInDb()
+
+	expect(blogsAtEnd[0].likes).toBe(25)
+})
+
 afterAll(async () => {
 	await mongoose.connection.close()
 })
