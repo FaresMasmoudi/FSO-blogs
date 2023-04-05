@@ -1,0 +1,10 @@
+POST http://localhost:3003/api/blogs
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFtaW56YWllbmkiLCJpZCI6IjY0MmRhNTFmYTNlY2Q4Yjc3OThlNzJmZSIsImlhdCI6MTY4MDcxNjU0NX0.DTn9PFmq4agoh_JtUlqRxgX3KhIy8TVrV46FYZ7tjOo
+
+{
+    "title": "nevermind fixed it",
+    "author": "karim abida",
+    "url": "trueeee.blog",
+    "likes": 25
+}
