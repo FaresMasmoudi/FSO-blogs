@@ -20,11 +20,11 @@ blogsRouter.post('/', async (request, response) => {
 	{
 		response.status(400).json({ error: 'likes or url missing' })
 	} else {
-		const decodedToken = jwt.verify(request.token, process.env.SECRET)
-		if (!decodedToken.id) {
+		const RequestUser = request.user
+		if (!RequestUser) {
 			return response.status(401).json({ error: 'token invalid' })
 		}
-		const user = await User.findById(decodedToken.id)
+		const user = await User.findById(RequestUser)
 
 		const blog = new Blog( {
 			title: body.title,
@@ -45,9 +45,9 @@ blogsRouter.post('/', async (request, response) => {
 })
 
 blogsRouter.delete('/:id', async (request, response) => {
-	const decodedToken = jwt.verify(request.token, process.env.SECRET)
+	const RequestUser = request.user
 	const blog = await Blog.findById(request.params.id)
-	if(decodedToken.id.toString() === blog.user.toString() && blog)
+	if(RequestUser.toString() === blog.user.toString() && blog)
 	{
 		await Blog.findByIdAndRemove(request.params.id)
 		response.status(204).end()
