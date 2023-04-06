@@ -29,6 +29,12 @@ test('verify that id property is named id', async () => {
 })
 
 test('a valid blog can be added', async () => {
+	const response = await api
+		.post('/api/login')
+		.send({ username: 'root', password: 'sekret' })
+
+	const token = response.body.token
+
 	const newBlog = {
 		title: 'JavaScript Belfalle9i',
 		author: 'Hsan Directeur',
@@ -39,6 +45,7 @@ test('a valid blog can be added', async () => {
 	await api
 		.post('/api/blogs')
 		.send(newBlog)
+		.set('Authorization', `Bearer ${token}`)
 		.expect(201)
 		.expect('Content-Type', /application\/json/)
 
@@ -52,6 +59,11 @@ test('a valid blog can be added', async () => {
 })
 
 test('checks if the likes property is missing 0 is affected to likes', async () => {
+	const loginResponse = await api
+		.post('/api/login')
+		.send({ username: 'root', password: 'sekret' })
+
+	const token = loginResponse.body.token
 	const newBlog = {
 		title: 'NodeJs is Special',
 		author: 'Reb3i Mouleha',
@@ -61,6 +73,7 @@ test('checks if the likes property is missing 0 is affected to likes', async () 
 	const response = await api
 		.post('/api/blogs')
 		.send(newBlog)
+		.set('Authorization', `Bearer ${token}`)
 		.expect(201)
 		.expect('Content-Type', /application\/json/)
 	expect(response.body.likes).toBeDefined()
@@ -121,7 +134,6 @@ test('updating likes on a blog', async () => {
 	const blogsAtStart = await helper.blogsInDb()
 	const blogToUpdate = blogsAtStart[0]
 	const newBlog = { ...blogToUpdate, likes: 25 }
-	console.log(newBlog)
 	await api
 		.put(`/api/blogs/${blogToUpdate.id}`)
 		.send(newBlog)
