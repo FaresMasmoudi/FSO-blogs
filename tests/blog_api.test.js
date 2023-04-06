@@ -5,6 +5,7 @@ const app = require('../app')
 
 const api = supertest(app)
 const Blog = require('../models/blog')
+const User = require('../models/user')
 
 beforeEach(async () => {
 	await Blog.deleteMany({})
@@ -111,6 +112,75 @@ test('checks if the title is missing request 400 is sent', async () => {
 		.expect(400)
 })
 
+test('adding new blog fails with code 401 if token is not provided', async () => {
+
+	const newBlog = {
+		title: 'JavaScript Belfalle9i',
+		author: 'Hsan Directeur',
+		url: 'http://www.hsouna.lem3allem.com.tn/hsounajavascript',
+		likes: 19
+	}
+
+	const result = await api
+		.post('/api/blogs')
+		.send(newBlog)
+		.expect(401)
+		.expect('Content-Type', /application\/json/)
+
+	expect(result.body.error).toContain('token invalid')
+
+	const blogsAtEnd = await helper.blogsInDb()
+	expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length)
+
+	const titles = blogsAtEnd.map(r => r.title)
+	expect(titles).not.toContain(
+		'JavaScript Belfalle9i'
+	)
+})
+
+test('deleting an existing resource. succeeds with status code 204 when user is authorized', async () => {
+
+	const response = await api
+		.post('/api/login')
+		.send({ username: 'root', password: 'sekret' })
+
+	const token = response.body.token
+
+	const newBlog = {
+		title: 'JavaScript Belfalle9i',
+		author: 'Hsan Directeur',
+		url: 'http://www.hsouna.lem3allem.com.tn/hsounajavascript',
+		likes: 19
+	}
+
+	await api
+		.post('/api/blogs')
+		.send(newBlog)
+		.set('Authorization', `Bearer ${token}`)
+
+	const user = await User.findOne( { username: `${response.body.username}` } ).populate('blogs')
+	console.log(user)
+	const blogsAtStart = await helper.blogsInDb()
+	const userBlogsAtStart = user.blogs
+	const blogToDelete = userBlogsAtStart[0]
+	console.log(blogToDelete.id)
+	await api
+		.delete(`/api/blogs/${blogToDelete.id}`)
+		.set('Authorization', `Bearer ${token}`)
+		.expect(204)
+
+	const blogsAtEnd = await helper.blogsInDb()
+
+	expect(blogsAtEnd).toHaveLength(
+		blogsAtStart.length - 1
+	)
+
+	const titles = blogsAtEnd.map(r => r.title)
+
+	expect(titles).not.toContain(blogsAtEnd.title)
+})
+
+/* old deleting test (doesn't work after authentification)
 test('deleting an existing resource. succeeds with status code 204 if id is valid', async () => {
 	const blogsAtStart = await helper.blogsInDb()
 	const blogToDelete = blogsAtStart[0]
@@ -129,6 +199,7 @@ test('deleting an existing resource. succeeds with status code 204 if id is vali
 
 	expect(titles).not.toContain(blogsAtEnd.title)
 })
+*/
 
 test('updating likes on a blog', async () => {
 	const blogsAtStart = await helper.blogsInDb()
